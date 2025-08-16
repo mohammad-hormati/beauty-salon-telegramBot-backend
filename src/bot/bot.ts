@@ -17,7 +17,9 @@ bot.start(async (ctx) => {
     welcomeMsg,
     Markup.inlineKeyboard([
       [Markup.button.callback("📅 دریافت نوبت", "get_appointment")],
-      [Markup.button.callback("📋 مشاهده خدمات", "list_services")],
+      [Markup.button.callback("📋 مشاهده لاین‌های فعال", "list_services")],
+      [Markup.button.callback("📸 نمونه کار", "noop")],
+      [Markup.button.callback("📝 مشاوره", "noop")],
     ])
   );
 });
