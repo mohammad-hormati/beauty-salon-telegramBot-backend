@@ -1,14 +1,23 @@
 import moment from 'moment';
 import { prisma } from '../app';
-import { nextNDays } from '../utils/dateConverter'; // still using your helper
+import { nextNDays } from '../utils/dateConverter';
 
 export const getAvailableSlots = async (serviceId: number) => {
-  const service = await prisma.service.findUnique({ where: { id: serviceId } });
+  const service = await prisma.service.findUnique({
+    where: { id: serviceId },
+    include: { performer: true },
+  });
   if (!service) throw new Error('Service not found');
 
-  const slots: Record<string, string[]> = {};
+  const relatedServiceIds = service.performer
+    ? (await prisma.service.findMany({
+        where: { performerId: service.performer.id },
+        select: { id: true },
+      })).map(s => s.id)
+    : [service.id];
 
-  const days = nextNDays(30).map((d) => d.date);
+  const slots: Record<string, string[]> = {};
+  const days = nextNDays(30).map(d => d.date);
 
   for (const day of days) {
     const start = new Date(moment(day).format('YYYY-MM-DD') + 'T09:00:00');
@@ -18,14 +27,15 @@ export const getAvailableSlots = async (serviceId: number) => {
     const daySlots: string[] = [];
 
     while (slotTime < end) {
-      const slotEnd = new Date(
-        slotTime.getTime() + service.durationMin * 60000,
-      );
+      const slotEnd = new Date(slotTime.getTime() + service.durationMin * 60000);
 
       const exists = await prisma.appointment.findFirst({
         where: {
-          serviceId,
-          date: slotTime,
+          serviceId: { in: relatedServiceIds },
+          AND: [
+            { startDate: { lt: slotEnd } },
+            { endDate: { gt: slotTime } },
+          ],
         },
       });
 

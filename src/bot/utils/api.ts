@@ -27,16 +27,19 @@ export const createAppointment = async (
   name: string,
   phone: string,
   serviceId: number,
-  date: Date
+  startDate: Date,
+  endDate: Date
 ) => {
   return axios.post(`${API_URL}/appointments`, {
     telegramId,
     name,
     phone,
     serviceId,
-    date
+    startDate,
+    endDate
   });
 };
+
 
 export const fetchAvailableSlots = async (serviceId: number) => {
   const res = await axios.get(`${API_URL}/appointments/available/${serviceId}`);

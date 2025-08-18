@@ -6,16 +6,20 @@ const router = Router();
 
 // GET all appointments
 router.get('/', async (req, res) => {
-  const appointments = await prisma.appointment.findMany({
-    include: { user: true, service: true },
-  });
-  res.json(appointments);
+  try {
+    const appointments = await prisma.appointment.findMany({
+      include: { user: true, service: true },
+    });
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching appointments' });
+  }
 });
 
 router.post('/', async (req, res) => {
-  const { telegramId, name, phone, serviceId, date } = req.body;
+  const { telegramId, name, phone, serviceId, startDate } = req.body;
 
-  if (!telegramId || !serviceId || !date) {
+  if (!telegramId || !serviceId || !startDate) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -34,12 +38,22 @@ router.post('/', async (req, res) => {
       });
     }
 
+    const service = await prisma.service.findUnique({
+      where: { id: Number(serviceId) },
+    });
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+
+    const start = new Date(startDate);
+    const end = new Date(start.getTime() + service.durationMin * 60000); 
+
     const appointment = await prisma.appointment.create({
       data: {
         userId: user.id,
-        serviceId: Number(serviceId),
-        date: new Date(date),
+        serviceId: service.id,
+        startDate: start,
+        endDate: end,
       },
+      include: { user: true, service: true },
     });
 
     res.json(appointment);
@@ -49,6 +63,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+// GET available slots
 router.get('/available/:serviceId', async (req, res) => {
   const { serviceId } = req.params;
   try {

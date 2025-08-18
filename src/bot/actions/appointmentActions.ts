@@ -2,6 +2,7 @@ import { buildInlineButtons } from "../utils/buttons";
 import { getUserSession, clearUserSession } from "../utils/session";
 import { fetchAvailableSlots, createAppointment } from "../utils/api";
 import { nextNDays } from "../../utils/dateConverter";
+import { prisma } from "../../app";
 
 export const serviceSelectionAction = async (ctx: any) => {
   const serviceId = Number(ctx.match[1]);
@@ -53,23 +54,34 @@ export const slotSelectionAction = async (ctx: any) => {
   const slotIso = ctx.match[1];
   const session = getUserSession(ctx.from.id);
 
-  const selectedSlotDate = new Date(slotIso);
-  if (isNaN(selectedSlotDate.getTime())) {
+  const startDate = new Date(slotIso);
+  if (isNaN(startDate.getTime())) {
     return ctx.reply("❌ تاریخ یا زمان انتخاب شده معتبر نیست");
   }
 
   try {
+    // گرفتن مدت زمان سرویس انتخابی از session یا دیتابیس
+    const service = await prisma.service.findUnique({
+      where: { id: session.selectedServiceId },
+    });
+    if (!service) {
+      return ctx.reply("❌ سرویس انتخابی معتبر نیست");
+    }
+
+    const endDate = new Date(startDate.getTime() + service.durationMin * 60000);
+
     await createAppointment(
       ctx.from.id,
       session.name,
       session.phone,
       session.selectedServiceId,
-      selectedSlotDate
+      startDate,
+      endDate
     );
 
     ctx.reply(
       `🎉 نوبت شما با موفقیت ثبت شد!\n` +
-        `🗓 تاریخ و زمان: ${selectedSlotDate.toLocaleString("fa-IR")}\n` +
+        `🗓 تاریخ و زمان: ${startDate.toLocaleString("fa-IR")} تا ${endDate.toLocaleTimeString("fa-IR")}\n` +
         `👤 نام: ${session.name || "نام ثبت نشده"}\n📞 شماره: ${session.phone || "ثبت نشده"}`
     );
 
@@ -79,3 +91,4 @@ export const slotSelectionAction = async (ctx: any) => {
     ctx.reply("خطا در ثبت اطلاعات، لطفا دوباره تلاش کنید");
   }
 };
+
