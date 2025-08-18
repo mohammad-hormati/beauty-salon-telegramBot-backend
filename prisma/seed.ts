@@ -1,10 +1,12 @@
+import { Performer } from './../node_modules/.prisma/client/index.d';
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-type Svc = { name: string; durationMin: number; price: number; performer: string };
+type ServiceType = { name: string; durationMin: number; price: number; performer: string };
 
 async function main() {
-  const performerNames = [
+
+  const performerNames: string[] = [
     "متخصص ناخن",
     "متخصص مژه",
     "آرایشگر مو",
@@ -23,7 +25,7 @@ async function main() {
     performerMap[name] = p.id;
   }
 
-  const services: Svc[] = [
+  const services: ServiceType[] = [
     { name: "آرایش دائم", durationMin: 60, price: 850, performer: "میکاپ آرتیست" },
     { name: "اکستنشن مژه", durationMin: 60, price: 690, performer: "متخصص مژه" },
     { name: "ترمیم ناخن", durationMin: 60, price: 350, performer: "متخصص ناخن" },
@@ -40,24 +42,22 @@ async function main() {
     { name: "رنگ ریشه", durationMin: 60, price: 450, performer: "آرایشگر مو" },
   ];
 
-  await Promise.all(
-    services.map((s) =>
-      prisma.service.upsert({
-        where: { name: s.name },
+  for (const service of services) {
+    await prisma.service.upsert({
+        where: { name: service.name },
         update: {
-          durationMin: s.durationMin,
-          price: s.price,
-          performerId: performerMap[s.performer],
+          durationMin: service.durationMin,
+          price: service.price,
+          performerId: performerMap[service.performer],
         },
         create: {
-          name: s.name,
-          durationMin: s.durationMin,
-          price: s.price,
-          performerId: performerMap[s.performer],
+          name: service.name,
+          durationMin: service.durationMin,
+          price: service.price,
+          performerId: performerMap[service.performer],
         },
       })
-    )
-  );
+  }
 
   console.log("✅ seed executed successfully");
 }

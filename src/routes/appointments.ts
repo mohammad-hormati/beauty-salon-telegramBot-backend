@@ -16,6 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST create new appointment
 router.post('/', async (req, res) => {
   const { telegramId, name, phone, serviceId, startDate } = req.body;
 

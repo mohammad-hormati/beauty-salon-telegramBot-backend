@@ -11,10 +11,10 @@ router.get('/', async (req, res) => {
 
 // POST create new service
 router.post('/', async (req, res) => {
-  const { name, durationMin, price } = req.body;
+  const { name, durationMin, price, performerId } = req.body;
   try {
     const service = await prisma.service.create({
-      data: { name, durationMin, price },
+      data: { name, durationMin, price, performerId },
     });
     res.json(service);
   } catch (error) {
