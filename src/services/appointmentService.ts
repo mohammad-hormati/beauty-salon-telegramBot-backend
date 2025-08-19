@@ -10,14 +10,16 @@ export const getAvailableSlots = async (serviceId: number) => {
   if (!service) throw new Error('Service not found');
 
   const relatedServiceIds = service.performer
-    ? (await prisma.service.findMany({
-        where: { performerId: service.performer.id },
-        select: { id: true },
-      })).map(s => s.id)
+    ? (
+        await prisma.service.findMany({
+          where: { performerId: service.performer.id },
+          select: { id: true },
+        })
+      ).map((s) => s.id)
     : [service.id];
 
   const slots: Record<string, string[]> = {};
-  const days = nextNDays(30).map(d => d.date);
+  const days = nextNDays(30).map((d) => d.date);
 
   for (const day of days) {
     const start = new Date(moment(day).format('YYYY-MM-DD') + 'T09:00:00');
@@ -29,13 +31,16 @@ export const getAvailableSlots = async (serviceId: number) => {
     while (slotTime < end) {
       const slotEnd = new Date(slotTime.getTime() + service.durationMin * 60000);
 
+      const now = new Date();
+      if (slotEnd <= now) {
+        slotTime = slotEnd;
+        continue;
+      }
+
       const exists = await prisma.appointment.findFirst({
         where: {
           serviceId: { in: relatedServiceIds },
-          AND: [
-            { startDate: { lt: slotEnd } },
-            { endDate: { gt: slotTime } },
-          ],
+          AND: [{ startDate: { lt: slotEnd } }, { endDate: { gt: slotTime } }],
         },
       });
 
