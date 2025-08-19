@@ -7,6 +7,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum ShiftStatus {
+  AVAILABLE
+  OFF
+  LEAVE
+}
+
 model User {
   id           Int           @id @default(autoincrement())
   telegramId   String        @unique
@@ -20,6 +26,7 @@ model Performer {
   id        Int       @id @default(autoincrement())
   name      String    @unique
   services  Service[]
+  shifts    Shift[]
   createdAt DateTime  @default(now())
 }
 
@@ -31,6 +38,19 @@ model Service {
   appointments Appointment[]
   performer   Performer?     @relation(fields: [performerId], references: [id])
   performerId Int?
+}
+
+model Shift {
+  id          Int          @id @default(autoincrement())
+  performer   Performer    @relation(fields: [performerId], references: [id])
+  performerId Int
+  date        DateTime     
+  startTime   DateTime?    
+  endTime     DateTime?    
+  status      ShiftStatus  @default(AVAILABLE)
+  createdAt   DateTime     @default(now())
+
+  @@unique([performerId, date])
 }
 
 model Appointment {
