@@ -34,4 +34,20 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT update user by telegramId
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, phone } = req.body;
+
+  try {
+    const user = await prisma.user.update({
+      where: { telegramId: id },
+      data: { name, phone },
+    });
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: 'Error updating user' });
+  }
+});
+
 export default router;

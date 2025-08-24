@@ -3,7 +3,6 @@ import { getUserSession, clearUserSession } from '../utils/session';
 import { fetchAvailableSlots, createAppointment } from '../utils/api';
 import { nextNDays } from '../../utils/dateConverter';
 import { prisma } from '../../app';
-import moment from 'moment';
 
 export const serviceSelectionAction = async (ctx: any) => {
   const serviceId = Number(ctx.match[1]);

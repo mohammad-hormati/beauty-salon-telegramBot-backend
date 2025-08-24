@@ -9,7 +9,7 @@ import {
   confirmAppointmentAction,
 } from './actions/appointmentActions';
 import { fetchServices, ensureUserExists, fetchAvailableSlots } from './utils/api';
-import { buildInlineButtons, buildInlineButtonsWithNav } from './utils/buttons';
+import { buildInlineButtonsWithNav } from './utils/buttons';
 import { nextNDays } from '../utils/dateConverter';
 
 dotenv.config();
