@@ -3,6 +3,7 @@ import { getUserSession, clearUserSession } from '../utils/session';
 import { fetchAvailableSlots, createAppointment } from '../utils/api';
 import { nextNDays } from '../../utils/dateConverter';
 import { prisma } from '../../app';
+import moment from 'moment';
 
 export const serviceSelectionAction = async (ctx: any) => {
   const serviceId = Number(ctx.match[1]);
@@ -95,7 +96,8 @@ export const slotSelectionAction = async (ctx: any) => {
         `👤 نام: ${session.name || 'نام ثبت نشده'}\n` +
         `📞 شماره: ${session.phone || 'ثبت نشده'}\n` +
         `💅 لاین/سرویس: ${serviceName}\n` +
-        `🗓 تاریخ و زمان: ${startDate.toLocaleString('fa-IR')} تا ${endDate.toLocaleTimeString('fa-IR')}\n\n` +
+        `🗓  تاریخ: ${new Intl.DateTimeFormat('fa-IR').format(startDate)}\n` +
+        `🗓  زمان: ${startDate.toLocaleString('fa-IR', { hour: '2-digit', minute: '2-digit' })} تا ${endDate.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}\n\n` +
         `در صورت تایید، دکمه زیر را بزنید.`,
       buttons,
     );
@@ -123,12 +125,7 @@ export const confirmAppointmentAction = async (ctx: any) => {
       endDate,
     );
 
-    ctx.reply(
-      `🎉 نوبت شما با موفقیت ثبت شد!\n\n` +
-        `👤 نام: ${session.name || 'نام ثبت نشده'}\n` +
-        `📞 شماره: ${session.phone || 'ثبت نشده'}\n` +
-        `🗓 تاریخ و زمان: ${startDate.toLocaleString('fa-IR')} تا ${endDate.toLocaleTimeString('fa-IR')}`,
-    );
+    ctx.reply(`🎉 نوبت شما با موفقیت ثبت شد!`);
 
     clearUserSession(ctx.from.id);
   } catch (err) {
