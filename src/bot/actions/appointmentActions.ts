@@ -3,6 +3,7 @@ import { getUserSession, clearUserSession } from '../utils/session';
 import { fetchAvailableSlots, createAppointment } from '../utils/api';
 import { nextNDays } from '../../utils/dateConverter';
 import { prisma } from '../../app';
+import { Markup } from 'telegraf';
 
 export const serviceSelectionAction = async (ctx: any) => {
   const serviceId = Number(ctx.match[1]);
@@ -94,9 +95,9 @@ export const slotSelectionAction = async (ctx: any) => {
       `🔎 لطفاً اطلاعات زیر را بررسی کنید:\n\n` +
         `👤 نام: ${session.name || 'نام ثبت نشده'}\n` +
         `📞 شماره: ${session.phone || 'ثبت نشده'}\n` +
-        `💅 لاین/سرویس: ${serviceName}\n` +
+        `💅 لاین: ${serviceName}\n` +
         `🗓  تاریخ: ${new Intl.DateTimeFormat('fa-IR').format(startDate)}\n` +
-        `🗓  زمان: ${startDate.toLocaleString('fa-IR', { hour: '2-digit', minute: '2-digit' })} تا ${endDate.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}\n\n` +
+        `🕒  زمان: ${startDate.toLocaleString('fa-IR', { hour: '2-digit', minute: '2-digit' })} تا ${endDate.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}\n\n` +
         `در صورت تایید، دکمه زیر را بزنید.`,
       buttons,
     );
@@ -130,5 +131,51 @@ export const confirmAppointmentAction = async (ctx: any) => {
   } catch (err) {
     console.error('DB Error:', err);
     ctx.reply('⚠️ خطا در ثبت اطلاعات، لطفا دوباره تلاش کنید');
+  }
+};
+
+export const myAppointmentsAction = async (ctx: any) => {
+  try {
+    const appointments = await prisma.appointment.findMany({
+      where: { user: { telegramId: String(ctx.from.id) } },
+      include: { service: true },
+      orderBy: { startDate: 'asc' },
+    });
+
+    if (!appointments.length) {
+      return ctx.reply('📭 شما هیچ نوبت فعالی ندارید.');
+    }
+
+    for (const app of appointments) {
+      const start = new Date(app.startDate);
+      const end = new Date(app.endDate);
+
+      await ctx.reply(
+        `📝 نوبت شما:\n` +
+          `💅 لاین: ${app.service?.name}\n` +
+          `📅 تاریخ: ${new Intl.DateTimeFormat('fa-IR').format(start)}\n` +
+          `🕒 ساعت: ${start.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })} تا ${end.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}`,
+        Markup.inlineKeyboard([[Markup.button.callback('❌ لغو نوبت', `cancel_appointment_${app.id}`)]]),
+      );
+    }
+  } catch (err) {
+    console.error(err);
+    ctx.reply('⚠️ خطا در دریافت نوبت‌های شما.');
+  }
+};
+
+export const cancelAppointmentByIdAction = async (ctx: any) => {
+  const appointmentId = Number(ctx.match[1]);
+  try {
+    const deleted = await prisma.appointment.delete({
+      where: { id: appointmentId },
+    });
+
+    await ctx.editMessageText(
+      `❌ نوبت شما در تاریخ ${new Intl.DateTimeFormat('fa-IR').format(deleted.startDate)} لغو شد.`,
+    );
+  } catch (err) {
+    console.error(err);
+    ctx.reply('⚠️ خطا در لغو نوبت.');
   }
 };

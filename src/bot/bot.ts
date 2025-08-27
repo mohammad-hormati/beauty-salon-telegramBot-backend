@@ -7,6 +7,8 @@ import {
   daySelectionAction,
   slotSelectionAction,
   confirmAppointmentAction,
+  myAppointmentsAction,
+  cancelAppointmentByIdAction,
 } from './actions/appointmentActions';
 import { fetchServices, ensureUserExists, fetchAvailableSlots } from './utils/api';
 import { buildInlineButtonsWithNav } from './utils/buttons';
@@ -24,8 +26,9 @@ bot.start(async (ctx) => {
     Markup.inlineKeyboard([
       [Markup.button.callback('📅 دریافت نوبت', 'get_appointment')],
       [Markup.button.callback('💅 مشاهده لاین‌های فعال', 'list_services')],
+      [Markup.button.callback('📖 نوبت‌های من', 'my_appointments')],
       [Markup.button.url('📸 نمونه کار', 'https://t.me/banoohoseinii')],
-      [Markup.button.callback('📝 مشاوره', 'noop')],
+      // [Markup.button.callback('📝 مشاوره', 'noop')],
     ]),
   );
 });
@@ -47,6 +50,9 @@ bot.action(/confirm_(.+)/, async (ctx) => {
 });
 
 bot.action('list_services', listServicesAction);
+
+bot.action('my_appointments', myAppointmentsAction);
+bot.action(/cancel_appointment_(\d+)/, cancelAppointmentByIdAction);
 
 // ---------- Cancel ----------
 bot.action('cancel_appointment', async (ctx) => {
