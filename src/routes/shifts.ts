@@ -4,6 +4,43 @@ import moment from 'moment';
 
 const router = Router();
 
+// ✅ Create new shift
+router.post('/', async (req, res) => {
+  try {
+    const { performerId, date, status, startTime, endTime } = req.body;
+
+    if (!performerId || !date || !status) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const day = moment(date, 'YYYY-MM-DD');
+    if (!day.isValid()) return res.status(400).json({ error: 'Invalid date' });
+
+    const startDT = startTime ? moment(`${date} ${startTime}`, 'YYYY-MM-DD HH:mm') : null;
+    const endDT = endTime ? moment(`${date} ${endTime}`, 'YYYY-MM-DD HH:mm') : null;
+
+    if (startDT && endDT && !endDT.isAfter(startDT)) {
+      return res.status(400).json({ error: 'endTime must be after startTime' });
+    }
+
+    const shift = await prisma.shift.create({
+      data: {
+        performerId: Number(performerId),
+        date: day.startOf('day').toDate(),
+        status,
+        startTime: startDT ? startDT.toDate() : null,
+        endTime: endDT ? endDT.toDate() : null,
+      },
+    });
+
+    res.json(shift);
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Cannot create shift' });
+  }
+});
+
+// ✅ Upsert (update or insert if exists)
 router.post('/upsert', async (req, res) => {
   try {
     const { performerId, date, status, startTime, endTime } = req.body;
@@ -52,6 +89,7 @@ router.post('/upsert', async (req, res) => {
   }
 });
 
+// ✅ Get all shifts by performer & date range
 router.get('/', async (req, res) => {
   try {
     const { performerId, from, to } = req.query as Record<string, string>;
@@ -79,6 +117,57 @@ router.get('/', async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(400).json({ error: 'Cannot fetch shifts' });
+  }
+});
+
+// ✅ Get single shift by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const shift = await prisma.shift.findUnique({
+      where: { id: Number(req.params.id) },
+    });
+
+    if (!shift) return res.status(404).json({ error: 'Shift not found' });
+
+    res.json(shift);
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Cannot fetch shift' });
+  }
+});
+
+// ✅ Update shift by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const { status, startTime, endTime } = req.body;
+
+    const shift = await prisma.shift.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        status,
+        startTime: startTime ? new Date(startTime) : undefined,
+        endTime: endTime ? new Date(endTime) : undefined,
+      },
+    });
+
+    res.json(shift);
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Cannot update shift' });
+  }
+});
+
+// ✅ Delete shift by ID
+router.delete('/:id', async (req, res) => {
+  try {
+    await prisma.shift.delete({
+      where: { id: Number(req.params.id) },
+    });
+
+    res.json({ message: 'Shift deleted successfully' });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: 'Cannot delete shift' });
   }
 });
 

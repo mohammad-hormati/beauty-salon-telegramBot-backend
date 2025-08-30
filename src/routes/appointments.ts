@@ -16,6 +16,21 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET appointment by ID
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: Number(id) },
+      include: { user: true, service: true },
+    });
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+    res.json(appointment);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching appointment' });
+  }
+});
+
 // POST create new appointment
 router.post('/', async (req, res) => {
   const { telegramId, name, phone, serviceId, startDate } = req.body;
@@ -116,6 +131,50 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: 'Error creating appointment' });
+  }
+});
+
+// PUT update appointment by ID
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { serviceId, startDate } = req.body;
+
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+
+    const updated = await prisma.appointment.update({
+      where: { id: Number(id) },
+      data: {
+        serviceId: serviceId ? Number(serviceId) : appointment.serviceId,
+        startDate: startDate ? new Date(startDate) : appointment.startDate,
+        endDate: startDate
+          ? new Date(new Date(startDate).getTime() + 30 * 60000) // 🟢 اینجا باید مدت سرویس واقعی رو حساب کنی
+          : appointment.endDate,
+      },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: 'Error updating appointment' });
+  }
+});
+
+// DELETE appointment by ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found' });
+
+    await prisma.appointment.delete({ where: { id: Number(id) } });
+    res.json({ message: 'Appointment deleted successfully' });
+  } catch (err) {
+    res.status(400).json({ error: 'Error deleting appointment' });
   }
 });
 
