@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import servicesRouter from './services';
-import stylistsRouter from './stylists';
 import appointmentsRouter from './appointments';
 import usersRouter from './users';
+import shiftsRouter from './shifts';
+import authRouter from './auth';
 
 const router = Router();
 
 router.use('/services', servicesRouter);
-router.use('/stylists', stylistsRouter);
 router.use('/appointments', appointmentsRouter);
 router.use('/users', usersRouter);
+router.use('/shifts', shiftsRouter);
+router.use('/auth', authRouter);
 
 router.get('/', (req, res) => res.send('API is running'));
 

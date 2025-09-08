@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios from 'axios';
 
-const API_URL = "http://localhost:4000/api";
+const API_URL = 'http://localhost:4000/api';
 
 export const fetchServices = async () => {
   const res = await axios.get(`${API_URL}/services`);
@@ -10,15 +10,21 @@ export const fetchServices = async () => {
 export const ensureUserExists = async (userId: number, name: string, phone: string) => {
   try {
     const existing = await axios.get(`${API_URL}/users/${userId}`).catch(() => null);
+
     if (!existing || !existing.data) {
       await axios.post(`${API_URL}/users`, {
         telegramId: String(userId),
         name,
         phone,
       });
+    } else {
+      await axios.put(`${API_URL}/users/${userId}`, {
+        name,
+        phone,
+      });
     }
   } catch {
-    throw new Error("User check/create failed");
+    throw new Error('User check/create/update failed');
   }
 };
 
@@ -27,14 +33,16 @@ export const createAppointment = async (
   name: string,
   phone: string,
   serviceId: number,
-  date: Date
+  startDate: Date,
+  endDate: Date,
 ) => {
   return axios.post(`${API_URL}/appointments`, {
     telegramId,
     name,
     phone,
     serviceId,
-    date
+    startDate,
+    endDate,
   });
 };
 
