@@ -7,9 +7,20 @@ services:
       POSTGRES_PASSWORD: 721851
       POSTGRES_DB: beautysalon_db
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: beauty_salon_backend
+    depends_on:
+      - db
+    ports:
+      - '4000:4000'
+    environment:
+      - NODE_ENV=production
+    restart: always
 
 volumes:
   db_data:
