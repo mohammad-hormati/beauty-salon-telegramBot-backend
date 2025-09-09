@@ -1,9 +1,6 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
-dotenv.config();
 
-const API_HOST = process.env.API_HOST || 'http://localhost:4000';
-const API_URL = `${API_HOST}/api`;
+const API_URL = 'http://localhost:4000/api';
 
 export const fetchServices = async () => {
   const res = await axios.get(`${API_URL}/services`);
