@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+import bcrypt from 'bcryptjs';
 
 type ServiceType = { name: string; durationMin: number; price: number; performer: string };
 
@@ -64,6 +65,32 @@ async function main() {
       },
     });
     serviceMap[service.name] = s.id;
+  }
+
+  // ---- Create default admin ----
+  const username = 'banoohoseini';
+  const password = 'banoohoseini';
+
+  const existingAdmin = await prisma.admin.findUnique({
+    where: { username },
+  });
+
+  if (!existingAdmin) {
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await prisma.admin.create({
+      data: {
+        username,
+        passwordHash,
+        role: 'SUPERADMIN',
+        name: 'مدیر اصلی',
+        email: 'admin@example.com',
+      },
+    });
+
+    console.log(`✅ Default admin created (username: ${username}, password: ${password})`);
+  } else {
+    console.log('ℹ️ Admin already exists, skipping...');
   }
 
   console.log('✅ Seed executed successfully');
