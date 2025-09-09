@@ -1,6 +1,6 @@
 import app from './app.js';
 import dotenv from 'dotenv';
-import bot from './bot/bot';
+import bot from './bot/bot.js';
 
 dotenv.config();
 
